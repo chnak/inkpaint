@@ -1,10 +1,19 @@
 import { removeItems } from "../utils";
 import DisplayObject from "./DisplayObject";
 
+function sortChildren(a, b) {
+  if (a.zIndex === b.zIndex) {
+    return a._lastSortedIndex - b._lastSortedIndex;
+  }
+  return a.zIndex - b.zIndex;
+}
+
 export default class Container extends DisplayObject {
   constructor() {
     super();
     this.children = [];
+    this.sortableChildren = false;
+    this.sortDirty = false;
   }
 
   onChildrenChange() {
@@ -24,6 +33,7 @@ export default class Container extends DisplayObject {
       }
 
       child.parent = this;
+      this.sortDirty = true;
       child.transform._parentID = -1;
       this.children.push(child);
       this._boundsID++;
@@ -47,6 +57,7 @@ export default class Container extends DisplayObject {
     }
 
     child.parent = this;
+    this.sortDirty = true;
     child.transform._parentID = -1;
 
     this.children.splice(index, 0, child);
@@ -178,7 +189,27 @@ export default class Container extends DisplayObject {
     }
   }
 
+  sortChildren() {
+    let sortRequired = false;
+    for (let i = 0, j = this.children.length; i < j; ++i) {
+      const child = this.children[i];
+      child._lastSortedIndex = i;
+      if (!sortRequired && child.zIndex !== 0) {
+        sortRequired = true;
+      }
+    }
+
+    if (sortRequired && this.children.length > 1) {
+      this.children.sort(sortChildren);
+    }
+    this.sortDirty = false;
+  }
+
   updateTransform() {
+    if (this.sortableChildren && this.sortDirty) {
+      this.sortChildren();
+    }
+
     this._boundsID++;
     this.transform.updateTransform(this.parent.transform);
     this.worldAlpha = this.alpha * this.parent.worldAlpha;
@@ -311,6 +342,7 @@ export default class Container extends DisplayObject {
     if (this.destroyed) return;
 
     super.destroy();
+    this.sortDirty = false;
     const destroyChildren =
       typeof options === "boolean" ? options : options && options.children;
     const oldChildren = this.removeChildren(0, this.children.length);
