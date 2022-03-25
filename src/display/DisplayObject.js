@@ -26,7 +26,6 @@ export default class DisplayObject extends EventEmitter {
     this.parent = null;
     this.worldAlpha = 1;
     this.filterArea = null;
-    this.initScale = new Point(1, 1);
 
     this.filters = null;
     this._enabledFilters = null;
@@ -230,26 +229,14 @@ export default class DisplayObject extends EventEmitter {
     return this;
   }
 
-  setScaleToInit() {
-    this.initScale.copy(this.scale);
-  }
-
-  copyScaleAndInit(scale) {
-    this.scale.copy(scale);
-    this.initScale.copy(scale);
-  }
-
   attr(attrs) {
-    const scaleInitX = this.initScale.x;
-    const scaleInitY = this.initScale.y;
-
     for (let key in attrs) {
       const val = attrs[key];
 
       switch (key) {
         case "scale":
-          this.scale.x = val * scaleInitX;
-          this.scale.y = val * scaleInitY;
+          this.scale.x = val;
+          this.scale.y = val;
           break;
 
         case "skew":
@@ -435,7 +422,6 @@ export default class DisplayObject extends EventEmitter {
     this.fxaa = false;
     this.filters = null;
     this.transform = null;
-    this.initScale = null;
     this.parent = null;
     this._bounds = null;
     this._currentBounds = null;
