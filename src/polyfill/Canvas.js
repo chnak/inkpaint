@@ -13,6 +13,7 @@ export default class PSCanvas extends poly(Canvas) {
     this._gl = null;
     this._renderType = "2d";
     this.useTypedArray = false;
+    this.rgbReverse = false;
     this.isPSCanvas = true;
     this.id = uuidvx();
   }
@@ -92,12 +93,13 @@ export default class PSCanvas extends poly(Canvas) {
   }
 
   _fillImageData(data, pixels, width, height) {
+    const m = this.rgbReverse ? [2, 1, 0, 3] : [0, 1, 2, 3];
     for (let i = 0; i < height; i++) {
       for (let j = 0; j < width; j++) {
         const col = j;
         const row = height - i - 1;
         for (let k = 0; k < 4; k++) {
-          const idx = 4 * (row * width + col) + k;
+          const idx = 4 * (row * width + col) + m[k];
           const idx2 = 4 * (i * width + col) + k;
           data.data[idx] = pixels[idx2];
         }
