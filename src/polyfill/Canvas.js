@@ -98,7 +98,7 @@ export default class PSCanvas extends poly(Canvas) {
     const m = [2, 1, 0, 3];
     const { width, height, _ctx } = this;
     const pixels = _ctx.getImageData(0, 0, width, height);
-    const data = createImageData(new Uint8ClampedArray(new Uint8Array(width * height * 4)), width, height);
+    const data = new Uint8Array(width * height * 4);
     for (let i = 0; i < height; i++) {
       for (let j = 0; j < width; j++) {
         const col = j;
@@ -106,11 +106,12 @@ export default class PSCanvas extends poly(Canvas) {
         for (let k = 0; k < 4; k++) {
           const idx = 4 * (row * width + col) + m[k];
           const idx2 = 4 * (row * width + col) + k;
-          data.data[idx] = pixels.data[idx2];
+          data[idx] = pixels.data[idx2];
         }
       }
     }
-    _ctx.putImageData(data, 0, 0);
+    const imageData = createImageData(new Uint8ClampedArray(data), width, height);
+    _ctx.putImageData(imageData, 0, 0);
   }
 
   _fillImageData(data, pixels, width, height) {
