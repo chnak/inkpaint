@@ -34,6 +34,8 @@ export default class PSCanvas extends poly(Canvas) {
       this._glResizeExt = ctx.getExtension("STACKGL_resize_drawingbuffer");
       this._ctx = super.getContext("2d", options);
       return this._gl;
+    } else {
+      this._ctx = super.getContext("2d", options);
     }
 
     return super.getContext(type, options);
@@ -92,6 +94,25 @@ export default class PSCanvas extends poly(Canvas) {
     _ctx.putImageData(data, 0, 0);
   }
 
+  _reverseColor() {
+    const m = [2, 1, 0, 3];
+    const { width, height, _ctx } = this;
+    const pixels = _ctx.getImageData(0, 0, width, height);
+    const data = createImageData(new Uint8ClampedArray(new Uint8Array(width * height * 4)), width, height);
+    for (let i = 0; i < height; i++) {
+      for (let j = 0; j < width; j++) {
+        const col = j;
+        const row = i;
+        for (let k = 0; k < 4; k++) {
+          const idx = 4 * (row * width + col) + m[k];
+          const idx2 = 4 * (row * width + col) + k;
+          data.data[idx] = pixels.data[idx2];
+        }
+      }
+    }
+    _ctx.putImageData(data, 0, 0);
+  }
+
   _fillImageData(data, pixels, width, height) {
     const m = this.rgbReverse ? [2, 1, 0, 3] : [0, 1, 2, 3];
     for (let i = 0; i < height; i++) {
@@ -112,26 +133,31 @@ export default class PSCanvas extends poly(Canvas) {
   // Store buffer png jpg and other data
   toBuffer(...args) {
     if (this._gl) this._putImageData();
+    else if (this.rgbReverse) this._reverseColor();
     return super.toBuffer(...args);
   }
 
   toDataURL(...args) {
     if (this._gl) this._putImageData();
+    else if (this.rgbReverse) this._reverseColor();
     return super.toDataURL(...args);
   }
 
   createPNGStream(...args) {
     if (this._gl) this._putImageData();
+    else if (this.rgbReverse) this._reverseColor();
     return super.createPNGStream(...args);
   }
 
   createJPEGStream(...args) {
     if (this._gl) this._putImageData();
+    else if (this.rgbReverse) this._reverseColor();
     return super.createJPEGStream(...args);
   }
 
   createPDFStream(...args) {
     if (this._gl) this._putImageData();
+    else if (this.rgbReverse) this._reverseColor();
     return super.createPDFStream(...args);
   }
 
@@ -141,5 +167,6 @@ export default class PSCanvas extends poly(Canvas) {
     this._event = null;
     this._glResizeExt = null;
     this._gl = null;
+    this._ctx = null;
   }
 }
