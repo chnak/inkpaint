@@ -86,4 +86,8 @@ export {
   destroyAndCleanAllCache
 } from "./utils/cache";
 
+export {
+  enableInteraction,
+} from "./utils/interaction";
+
 global.InkPaint = exports;
