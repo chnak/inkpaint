@@ -2,6 +2,9 @@ export const TextureCache = Object.create(null);
 
 export const BaseTextureCache = Object.create(null);
 
+// global debug vars
+global.InkPaintCache = { TextureCache, BaseTextureCache };
+
 export function addToTextureCache(texture, id) {
   if (!id) return;
 
