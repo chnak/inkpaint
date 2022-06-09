@@ -94,6 +94,9 @@ export default class Text extends Sprite {
     let linePositionX;
     let linePositionY;
 
+    // vertical center in lineHeight
+    let fontOffset = (lineHeight - fontProperties.fontSize) / 2;
+
     if (style.dropShadow) {
       context.fillStyle = style.dropShadowColor;
       context.globalAlpha = style.dropShadowAlpha;
@@ -110,7 +113,7 @@ export default class Text extends Sprite {
 
       for (let i = 0; i < lines.length; i++) {
         linePositionX = style.strokeThickness / 2;
-        linePositionY =
+        linePositionY = fontOffset + 
           style.strokeThickness / 2 + i * lineHeight + fontProperties.ascent;
 
         if (style.align === "right") {
@@ -147,7 +150,7 @@ export default class Text extends Sprite {
     // draw lines line by line
     for (let i = 0; i < lines.length; i++) {
       linePositionX = style.strokeThickness / 2;
-      linePositionY =
+      linePositionY = fontOffset + 
         style.strokeThickness / 2 + i * lineHeight + fontProperties.ascent;
 
       if (style.align === "right") {
