@@ -167,7 +167,7 @@ export default class BaseTexture extends EventEmitter {
         ii++;
       }
     }
-    console.log('cutoutImageData', this.uid, ii);
+    // console.log('cutoutImageData', this.uid, ii);
   }
 
   update() {
