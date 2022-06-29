@@ -51,6 +51,20 @@ export function rgb2hex(rgb) {
   return ((rgb[0] * 255) << 16) + ((rgb[1] * 255) << 8) + ((rgb[2] * 255) | 0);
 }
 
+export function str2rgb(h) {
+  let r, g, b;
+  if (h.length === 4) {
+    r = "0x" + h[1] + h[1];
+    g = "0x" + h[2] + h[2];
+    b = "0x" + h[3] + h[3];
+  } else if (h.length === 7) {
+    r = "0x" + h[1] + h[2];
+    g = "0x" + h[3] + h[4];
+    b = "0x" + h[5] + h[6];
+  }
+  return [Number(r), Number(g), Number(b)];
+}
+
 export function rgb2hsl(r, g, b) {
   r /= 255;
   g /= 255;

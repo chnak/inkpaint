@@ -206,7 +206,6 @@ export default class Text extends Sprite {
       } else {
         this.context.fillText(text, x, y);
       }
-
       return;
     }
 
@@ -289,6 +288,7 @@ export default class Text extends Sprite {
     // call sprite onTextureUpdate to update scale if _width or _height were set
     this._onTextureUpdate();
     baseTexture.emit("update", baseTexture);
+    baseTexture.adaptedNodeCanvas();
     this.dirty = false;
   }
 
@@ -329,6 +329,10 @@ export default class Text extends Sprite {
   }
 
   _generateFillStyle(style, lines) {
+    if (style.fillImage) {
+      return this.context.createPattern(style.fillImage, 'repeat');
+    }
+
     if (!Array.isArray(style.fill)) {
       return style.fill;
     }

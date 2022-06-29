@@ -15,6 +15,7 @@ import {
   addToBaseTextureCache,
   removeFromBaseTextureCache
 } from "../utils/cache";
+import { createCanvas } from "canvas";
 
 export default class BaseTexture extends EventEmitter {
   constructor(source, scaleMode, resolution) {
@@ -134,28 +135,39 @@ export default class BaseTexture extends EventEmitter {
     const { source, cutout, cutoutColors } = this;
     if (source && source instanceof PsImage && source.isPsImage) {
       this.source = PsImage.convertToImageData(source);
-
-      if (cutout) {
-        const { min, max } = cutoutColors;
-        this.cutoutImageData({ pixel: this.source, min, max });
-      }
+      if (cutout) this.cutoutImageData({ pixel: this.source, cutoutColors });
+    } else if (cutout && source && source.constructor.name.includes('Canvas') && source.getContext) {
+      const ctx = source.getContext('2d');
+      const pixel = ctx.getImageData(0, 0, this.source.width, this.source.height);
+      this.cutoutImageData({ pixel, cutoutColors });
+      ctx.clearRect(0, 0, source.width, source.height);
+      ctx.putImageData(pixel, 0, 0);
+    } else if (cutout && source && source.constructor.name === 'ImageData') {
+      this.cutoutImageData({ pixel: source, cutoutColors });
     }
   }
 
-  cutoutImageData({ pixel, min, max }) {
+  cutoutImageData({ pixel, cutoutColors }) {
     const { data } = pixel;
+    const { ch, cs, cl } = cutoutColors;
     const length = data.length;
 
+    // todo: if simlarity = 0, use rgb equal
+    let ii = 0;
     for (let i = 0; i < length; i += 4) {
       const r = data[i + 0];
       const g = data[i + 1];
       const b = data[i + 2];
       const [h, s, l] = rgb2hsl(r, g, b);
 
-      if (h > min && h < max) {
+      if (ch[0] < h && h < ch[1] && 
+          cs[0] < s && s < cs[1] && 
+          cl[0] < l && l < cl[1]) {
         data[i + 3] = 0;
+        ii++;
       }
     }
+    console.log('cutoutImageData', this.uid, ii);
   }
 
   update() {
