@@ -78,6 +78,13 @@ export default class PSCanvas extends poly(Canvas) {
     return this._event.removeAllListeners(type);
   }
 
+  _glBuffer() {
+    const { width, height, _ctx, _gl } = this;
+    const pixels = new Uint8Array(width * height * 4);
+    _gl.readPixels(0, 0, width, height, _gl.RGBA, _gl.UNSIGNED_BYTE, pixels);
+    return Buffer.from(pixels);
+  }
+
   _putImageData() {
     let data;
     const { width, height, _ctx, _gl, useTypedArray } = this;
@@ -133,7 +140,7 @@ export default class PSCanvas extends poly(Canvas) {
 
   // Store buffer png jpg and other data
   toBuffer(...args) {
-    if (this._gl) this._putImageData();
+    if (this._gl) return this._glBuffer();
     else if (this.rgbReverse) this._reverseColor();
     return super.toBuffer(...args);
   }

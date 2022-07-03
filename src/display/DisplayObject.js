@@ -3,11 +3,12 @@ import { TRANSFORM_MODE } from "../const";
 import Bounds from "./Bounds";
 import settings from "../settings";
 import Transform from "./Transform";
-import { uuidvx } from "../utils";
+import { str2rgb, uuidvx } from "../utils";
 import { Rectangle, Point } from "../math";
 import TransformStatic from "./TransformStatic";
 import FXAAFilter from "../filters/fxaa/FXAAFilter";
 import BlurFilter from "../filters/blur/BlurFilter";
+import ChromaFilter from "../filters/chroma/ChromaFilter";
 
 export default class DisplayObject extends EventEmitter {
   constructor() {
@@ -27,7 +28,7 @@ export default class DisplayObject extends EventEmitter {
     this.worldAlpha = 1;
     this.filterArea = null;
 
-    this.filters = null;
+    this.filters = [];
     this._enabledFilters = null;
     this._bounds = new Bounds();
     this._boundsID = 0;
@@ -36,6 +37,7 @@ export default class DisplayObject extends EventEmitter {
     this._localBoundsRect = null;
     this._mask = null;
     this._blur = 0;
+    this._chroma = null;
     this._fxaa = false;
     this.maskEnabled = true;
     this.destroyed = false;
@@ -376,29 +378,66 @@ export default class DisplayObject extends EventEmitter {
     }
   }
 
-  set blur(blur = 0) {
-    this._blur = blur;
+  set chroma(opt) {
+    if (opt && typeof(opt) === 'object') {
+      const {color, similarity=0.3, smoothness=0.1, saturation=0.1, shadowness=0.5} = opt;
+      const rgbColor = str2rgb(color, 255);
+      if (isNaN(rgbColor[0]) || isNaN(rgbColor[1]) || isNaN(rgbColor[2])) {
+        this._chroma = null;
+      } else {
+        this._chroma = { rgbColor, similarity, smoothness, saturation, shadowness };
+      }
+    } else {
+      this._chroma = null;
+    }
 
-    if (blur <= 0) {
-      this.filters = null;
+    let filter = this.filters.find(x => x instanceof ChromaFilter);
+    if (!this._chroma) {
+      // remove filter
+      if (filter) this.filters = this.filters.filter(x => x != filter);
       return;
     }
 
-    if (!this.filters) {
-      this.filters = [new BlurFilter()];
+    const { rgbColor, similarity, smoothness, saturation, shadowness } = this._chroma;
+    if (filter) {
+      filter.color = rgbColor;
+      filter.similarity = similarity;
+      filter.smoothness = smoothness;
+      filter.saturation = saturation;
+      filter.shadowness = shadowness;
+    } else {
+      filter = new ChromaFilter(rgbColor, similarity, smoothness, saturation, shadowness);
+      this.filters.push(filter);
+    }
+  }
+
+  get chroma() {
+    return this._chroma;
+  }
+
+  set blur(blur = 0) {
+    this._blur = blur;
+    let filter = this.filters.find(x => x instanceof BlurFilter);
+    if (blur <= 0) {
+      // remove filter
+      if (filter) this.filters = this.filters.filter(x => x != filter);
+      return;
     }
 
-    this.filters[0].blur = blur;
+    if (filter) return filter.blur = blur;
+    filter = new BlurFilter(blur);
+    this.filters.push(filter);
   }
 
   set fxaa(fxaa) {
+    this._fxaa = fxaa;
+    let filter = this.filters.find(x => x instanceof FXAAFilter);
     if (fxaa === false) {
-      this.filters = null;
-      return;
-    }
-
-    if (!this.filters) {
-      this.filters = [new FXAAFilter()];
+      // remove filter
+      if (filter) this.filters = this.filters.filter(x => x != filter);
+    } else if (!filter) {
+      filter = new FXAAFilter();
+      this.filters.push(filter);
     }
   }
 

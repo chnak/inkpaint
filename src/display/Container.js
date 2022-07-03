@@ -272,7 +272,7 @@ export default class Container extends DisplayObject {
     const filters = this.filters;
     const mask = this._mask;
 
-    if (filters) {
+    if (filters && filters.length > 0) {
       if (!this._enabledFilters) {
         this._enabledFilters = [];
       }
