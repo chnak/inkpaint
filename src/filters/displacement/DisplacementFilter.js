@@ -1,19 +1,18 @@
-import * as core from "../../core";
+import Filter from "../../renderers/webgl/filters/Filter";
+import Matrix from "../../math/Matrix";
+import Point from "../../math/Point";
 import { readFileSync } from "fs";
 import { join } from "path";
 
-export default class DisplacementFilter extends core.Filter {
+export default class DisplacementFilter extends Filter {
   constructor(sprite, scale) {
-    const maskMatrix = new core.Matrix();
+    const maskMatrix = new Matrix();
 
     sprite.renderable = false;
 
     super(
       // vertex shader
-      readFileSync(
-        join(__dirname, "../fragments/default-filter-matrix.vert"),
-        "utf8"
-      ),
+      readFileSync( join(__dirname, "../fragments/default-filter-matrix.vert"), "utf8"),
       // fragment shader
       readFileSync(join(__dirname, "./displacement.frag"), "utf8")
     );
@@ -29,7 +28,11 @@ export default class DisplacementFilter extends core.Filter {
       scale = 20;
     }
 
-    this.scale = new core.Point(scale, scale);
+    this.setScale(scale, scale);
+  }
+
+  setScale(x, y) {
+    this.scale = new Point(x, y);
   }
 
   apply(filterManager, input, output) {

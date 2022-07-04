@@ -9,6 +9,7 @@ import TransformStatic from "./TransformStatic";
 import FXAAFilter from "../filters/fxaa/FXAAFilter";
 import BlurFilter from "../filters/blur/BlurFilter";
 import ChromaFilter from "../filters/chroma/ChromaFilter";
+import DisplacementFilter from "../filters/displacement/DisplacementFilter";
 
 export default class DisplayObject extends EventEmitter {
   constructor() {
@@ -38,6 +39,7 @@ export default class DisplayObject extends EventEmitter {
     this._mask = null;
     this._blur = 0;
     this._chroma = null;
+    this._motion = null;
     this._fxaa = false;
     this.maskEnabled = true;
     this.destroyed = false;
@@ -376,6 +378,23 @@ export default class DisplayObject extends EventEmitter {
     } else {
       return false;
     }
+  }
+
+  setMotion(maskSprite, scale) {
+    let filter = this.filters.find(x => x instanceof DisplacementFilter);
+    if (!maskSprite) {
+      // remove filter
+      if (filter) this.filters = this.filters.filter(x => x != filter);
+      return;
+    }
+
+    if (filter) {
+      filter.maskSprite = maskSprite;
+    } else {
+      filter = new DisplacementFilter(maskSprite, scale);
+      this.filters.push(filter);
+    }
+    return filter;
   }
 
   set chroma(opt) {
