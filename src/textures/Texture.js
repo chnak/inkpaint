@@ -3,7 +3,7 @@ import settings from "../settings";
 import TextureUvs from "./TextureUvs";
 import EventEmitter from "eventemitter3";
 import { Rectangle, Point } from "../math";
-import { getResolutionOfUrl, rgb2hsl, str2rgb, uuidvx } from "../utils";
+import { getResolutionOfUrl, uuidvx } from "../utils";
 import {
   TextureCache,
   addToTextureCache,
@@ -56,7 +56,6 @@ export default class Texture extends EventEmitter {
     if (baseTexture instanceof Texture) baseTexture = baseTexture.baseTexture;
 
     this.baseTexture = baseTexture;
-    this.setCutoutToBaseTexture();
     this.addToCache(baseTexture.imageUrl);
 
     if (baseTexture.hasLoaded) {
@@ -92,33 +91,10 @@ export default class Texture extends EventEmitter {
     if (useCache) {
       this.addToCache(imageUrl);
       this.baseTexture = BaseTexture.fromImage(imageUrl);
-      this.setCutoutToBaseTexture();
       this.baseTexture.adaptedNodeCanvas();
     } else {
       this.baseTexture.updateSource(imageUrl);
     }
-  }
-
-  setCutoutColor(colorkey, colorsimilarity=0.2) {
-    if (typeof(colorkey) !== 'string' || !colorkey.startsWith('#')) return;
-
-    const [h, s, l] = rgb2hsl(...str2rgb(colorkey));
-    if (isNaN(h) || isNaN(s) || isNaN(l)) return;
-
-    const ch = [Math.round(h - colorsimilarity * 200), Math.round(h + colorsimilarity * 200)];
-    const cs = [25, 101];
-    const cl = [1, 101];
-
-    // console.log('setCutoutColor', {h, s, l, ch, cs, cl});
-    this.cutout = true;
-    this.cutoutColors = { colorkey, colorsimilarity, ch, cs, cl };
-    this.setCutoutToBaseTexture();
-  }
-
-  setCutoutToBaseTexture() {
-    if (!this.baseTexture) return;
-    this.baseTexture.cutout = this.cutout;
-    this.baseTexture.cutoutColors = this.cutoutColors;
   }
 
   getImageUrl() {
