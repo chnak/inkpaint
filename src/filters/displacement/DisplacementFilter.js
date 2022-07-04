@@ -42,9 +42,7 @@ export default class DisplacementFilter extends Filter {
     );
     this.uniforms.scale.x = this.scale.x;
     this.uniforms.scale.y = this.scale.y;
-
-    // draw the filter...
-    filterManager.applyFilter(this, input, output);
+    super.apply(filterManager, input, output);
   }
 
   get map() {

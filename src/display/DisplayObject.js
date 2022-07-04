@@ -390,6 +390,8 @@ export default class DisplayObject extends EventEmitter {
 
     if (filter) {
       filter.maskSprite = maskSprite;
+      filter.map = maskSprite._texture;
+      filter.setScale(scale, scale);
     } else {
       filter = new DisplacementFilter(maskSprite, scale);
       this.filters.push(filter);
