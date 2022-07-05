@@ -14,6 +14,10 @@ export default class ColorMatrixFilter extends Filter{
             readFileSync(join(__dirname, './colorMatrix.frag'), 'utf8')
         );
 
+        this.init();
+    }
+
+    init() {
         this.uniforms.m = [
             1, 0, 0, 0, 0,
             0, 1, 0, 0, 0,

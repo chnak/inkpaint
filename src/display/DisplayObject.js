@@ -10,6 +10,7 @@ import FXAAFilter from "../filters/fxaa/FXAAFilter";
 import BlurFilter from "../filters/blur/BlurFilter";
 import ChromaFilter from "../filters/chroma/ChromaFilter";
 import DisplacementFilter from "../filters/displacement/DisplacementFilter";
+import ColorMatrixFilter from "../filters/colorMatrix/ColorMatrixFilter";
 
 export default class DisplayObject extends EventEmitter {
   constructor() {
@@ -396,6 +397,33 @@ export default class DisplayObject extends EventEmitter {
       filter = new DisplacementFilter(maskSprite, scale);
       this.filters.push(filter);
     }
+    return filter;
+  }
+
+  setColorMatrix(opts, alpha=1) {
+    let filter = this.filters.find(x => x instanceof ColorMatrixFilter);
+    if (!Array.isArray(opts) || !opts.length) {
+      // remove filter
+      if (filter) this.filters = this.filters.filter(x => x != filter);
+      return;
+    }
+
+    if (filter) {
+      filter.init(); // reset
+    } else {
+      filter = new ColorMatrixFilter();
+      this.filters.push(filter);
+    }
+
+    filter.alpha = alpha;
+    opts.map(opt => {
+      let { key, value } = opt;
+      if (typeof(filter[key]) !== 'function') return;
+      if (value !== undefined && !Array.isArray(value)) value = [value];
+      if (!value) value = [];
+      value.push(true); // set multiply = true
+      filter[key].call(filter, ...value);
+    });
     return filter;
   }
 
