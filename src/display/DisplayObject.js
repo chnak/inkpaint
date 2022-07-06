@@ -10,7 +10,7 @@ import FXAAFilter from "../filters/fxaa/FXAAFilter";
 import BlurFilter from "../filters/blur/BlurFilter";
 import ChromaFilter from "../filters/chroma/ChromaFilter";
 import DisplacementFilter from "../filters/displacement/DisplacementFilter";
-import ColorMatrixFilter from "../filters/colorMatrix/ColorMatrixFilter";
+import ColorMatrixFilter from "../filters/colormatrix/ColorMatrixFilter";
 
 export default class DisplayObject extends EventEmitter {
   constructor() {
