@@ -10,7 +10,8 @@ import FXAAFilter from "../filters/fxaa/FXAAFilter";
 import BlurFilter from "../filters/blur/BlurFilter";
 import ChromaFilter from "../filters/chroma/ChromaFilter";
 import DisplacementFilter from "../filters/displacement/DisplacementFilter";
-import ColorMatrixFilter from "../filters/colorMatrix/ColorMatrixFilter";
+import ColorMatrixFilter from "../filters/colormatrix/ColorMatrixFilter";
+import SimpleFilter from "../filters/simple/SimpleFilter";
 
 export default class DisplayObject extends EventEmitter {
   constructor() {
@@ -379,6 +380,21 @@ export default class DisplayObject extends EventEmitter {
     } else {
       return false;
     }
+  }
+
+  addFilter(opt) {
+    try {
+      const filter = new SimpleFilter(opt);
+      this.filters.push(filter);
+      return filter;
+    } catch (e) {
+      console.error(e);
+      return;
+    }
+  }
+
+  removeFilter(filter) {
+    this.filters = this.filters.filter(x => x != filter);
   }
 
   setMotion(maskSprite, scale) {
