@@ -4,7 +4,6 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { default as TextureMatrix } from "../../../../textures/TextureMatrix";
 
-
 export default class SpriteMaskFilter extends Filter {
   /**
    * @param {InkPaint.Sprite} sprite - the target sprite
@@ -46,6 +45,7 @@ export default class SpriteMaskFilter extends Filter {
     tex.transform.update();
 
     this.uniforms.mask = tex;
+    this.uniforms.uReverseMask = !!maskSprite.reverseMask;
     this.uniforms.otherMatrix = filterManager
       .calculateSpriteMatrix(this.maskMatrix, maskSprite)
       .prepend(tex.transform.mapCoord);

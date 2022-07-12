@@ -1136,6 +1136,32 @@ export default class Graphics extends Container {
     return data;
   }
 
+  generateTexture(renderer, scaleMode, resolution = 1) {
+    const bounds = this.getLocalBounds();
+
+    const texture = RenderTexture.create(
+      bounds.width,
+      bounds.height,
+      scaleMode,
+      resolution
+    );
+
+    this.transform.updateLocalTransform();
+    this.transform.localTransform.copy(tempMatrix);
+
+    tempMatrix.invert();
+
+    tempMatrix.tx -= bounds.x;
+    tempMatrix.ty -= bounds.y;
+
+    // 不然会有2个很奇怪的线
+    tempMatrix.a *= 0.99;
+    tempMatrix.d *= 0.99;
+
+    renderer.render(this, texture, true, tempMatrix);
+    return texture;
+  }
+
   generateCanvasTexture(scaleMode, resolution = 1) {
     const bounds = this.getLocalBounds();
 
