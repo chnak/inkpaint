@@ -16,6 +16,9 @@ uniform bool useMask;
 uniform bool useBinaryMask;
 uniform bool useReverseMask;
 
+uniform float uStart;
+uniform float uDuration;
+
 ${uniforms}
 
 ${render}

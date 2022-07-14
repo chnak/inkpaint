@@ -19,9 +19,9 @@ void main(void)
 
     vec4 original = texture2D(uSampler, vTextureCoord);
     vec4 mask = texture2D(mask, vMaskCoord);
-    alpha = clamp(dot(mask.rgb, vec3(1.0, 1.0, 1.0)) * alpha * clip, 0.0, 1.0);
-    if (useBinaryMask) alpha = step(0.01, alpha);
-    if (useReverseMask) alpha = 1.0 - alpha;
+    float a = clamp(dot(mask.rgb, vec3(1.0, 1.0, 1.0)) * alpha * clip, 0.0, 1.0);
+    if (useBinaryMask) a = step(0.01, alpha);
+    if (useReverseMask) a = 1.0 - a;
     original *= a;
     gl_FragColor = original;
 }

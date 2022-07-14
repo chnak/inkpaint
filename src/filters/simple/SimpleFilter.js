@@ -84,4 +84,8 @@ export default class SimpleFilter extends Filter {
     }
   }
 
+  setTime(start, duration) {
+    this.uniforms.uStart = start;
+    this.uniforms.uDuration = duration;
+  }
 }

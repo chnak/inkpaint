@@ -34,9 +34,7 @@ export default class SpriteMaskFilter extends Filter {
     const maskSprite = this.maskSprite;
     const tex = this.maskSprite.texture;
 
-    if (!tex.valid) {
-      return;
-    }
+    if (!tex.valid) return;
     if (!tex.transform) {
       // margin = 0.0, let it bleed a bit, shader code becomes easier
       // assuming that atlas textures were made with 1-pixel padding
