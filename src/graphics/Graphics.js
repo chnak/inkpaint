@@ -1139,9 +1139,10 @@ export default class Graphics extends Container {
   generateTexture(renderer, scaleMode, resolution = 1) {
     const bounds = this.getLocalBounds();
 
+    // 留1px边框，避免贴着边导致 gl.CLAMP_TO_EDGE 效果
     const texture = RenderTexture.create(
-      bounds.width,
-      bounds.height,
+      bounds.width + 2,
+      bounds.height + 2,
       scaleMode,
       resolution
     );
@@ -1151,12 +1152,8 @@ export default class Graphics extends Container {
 
     tempMatrix.invert();
 
-    tempMatrix.tx -= bounds.x;
-    tempMatrix.ty -= bounds.y;
-
-    // 不然会有2个很奇怪的线
-    tempMatrix.a *= 0.99;
-    tempMatrix.d *= 0.99;
+    tempMatrix.tx -= bounds.x - 1;
+    tempMatrix.ty -= bounds.y - 1;
 
     renderer.render(this, texture, true, tempMatrix);
     return texture;

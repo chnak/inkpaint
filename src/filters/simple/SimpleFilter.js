@@ -8,7 +8,7 @@ export default class SimpleFilter extends Filter {
   constructor(opt) {
     let { key, vert, frag, render, vars } = opt || {};
 
-    if (!render) render = `vec4 render(sampler2D texture, vec2 uv, vec4 rgba) { return rgba; }`;
+    if (!render) render = `vec4 render(sampler2D tex, vec2 uv, vec4 bg, vec4 mask, float alpha) { return bg; }`;
     if (!vert) vert = readFileSync(join(__dirname, "../fragments/default-filter-matrix.vert"), "utf8");
     if (!frag) {
       const uniforms = [];
@@ -71,8 +71,12 @@ export default class SimpleFilter extends Filter {
         }
         tex.transform.update();
         this.uniforms.uMask = tex;
+        this.uniforms.uMaskAnchor = [mask.x, mask.y];
+        this.uniforms.uMaskSize = [mask.width, mask.height];
+        this.uniforms.uMaskRotation = mask.rotation;
         this.uniforms.useMask = true;
-        this.uniforms.uReverseMask = !!mask.reverseMask;
+        this.uniforms.useBinaryMask = !!mask.binaryMask;
+        this.uniforms.useReverseMask = !!mask.reverseMask;
         this.uniforms.maskClamp = tex.transform.uClampFrame;
       } else {
         this.uniforms.useMask = false;

@@ -4,24 +4,33 @@ varying vec2 vFilterCoord; // for mask
 uniform sampler2D uSampler;
 uniform sampler2D uMask;
 
+uniform vec2 uMaskAnchor;
+uniform vec2 uMaskSize;
+uniform float uMaskRotation;
+
 uniform vec4 filterArea;
 uniform vec4 filterClamp;
+uniform vec2 uFrameSize;
 
 uniform bool useMask;
-uniform bool uReverseMask;
+uniform bool useBinaryMask;
+uniform bool useReverseMask;
 
 ${uniforms}
 
 ${render}
 
 void main(void) {
-  vec4 rgba = texture2D(uSampler, vTextureCoord);
-  vec4 color = render(uSampler, vTextureCoord, rgba);
+  vec4 bg = texture2D(uSampler, vTextureCoord);
+  vec4 mask = vec4(1.0);
+  float alpha = 1.0;
   if (useMask) {
-    vec4 mask = texture2D(uMask, vFilterCoord);
-    float alpha = dot(mask.rgb, vec3(0.299, 0.587, 0.114)) * mask.a;
-    if (uReverseMask) alpha = 1.0 - alpha;
-    color = mix(rgba, color * alpha, alpha);
+    mask = texture2D(uMask, vFilterCoord);
+    alpha = clamp(dot(mask.rgb, vec3(1.0, 1.0, 1.0)), 0.0, 1.0);
+    if (useBinaryMask) alpha = step(0.01, alpha);
+    if (useReverseMask) alpha = 1.0 - alpha;
   }
+  vec4 color = render(uSampler, vTextureCoord, bg, mask, alpha);
+  color = mix(bg, color, alpha);
   gl_FragColor = color;
 }

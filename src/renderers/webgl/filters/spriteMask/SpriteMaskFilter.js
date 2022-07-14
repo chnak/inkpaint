@@ -45,13 +45,13 @@ export default class SpriteMaskFilter extends Filter {
     tex.transform.update();
 
     this.uniforms.mask = tex;
-    this.uniforms.uReverseMask = !!maskSprite.reverseMask;
+    this.uniforms.useBinaryMask = !!maskSprite.binaryMask;
+    this.uniforms.useReverseMask = !!maskSprite.reverseMask;
     this.uniforms.otherMatrix = filterManager
       .calculateSpriteMatrix(this.maskMatrix, maskSprite)
       .prepend(tex.transform.mapCoord);
     this.uniforms.alpha = maskSprite.worldAlpha;
     this.uniforms.maskClamp = tex.transform.uClampFrame;
-
     filterManager.applyFilter(this, input, output, clear);
   }
 }
