@@ -39,6 +39,13 @@ export default class SimpleFilter extends Filter {
         this._maskMatrix, this._mask
       );
     }
+    if (this._mask) {
+      this.uniforms.uMaskAnchor = [this._mask.x, this._mask.y];
+      this.uniforms.uMaskSize = [this._mask.width, this._mask.height];
+      this.uniforms.uMaskRotation = this._mask.rotation;
+      this.uniforms.useBinaryMask = !!this._mask.binaryMask;
+      this.uniforms.useReverseMask = !!this._mask.reverseMask;
+    }
     super.apply(filterManager, input, output, clear);
   }
 
@@ -71,12 +78,7 @@ export default class SimpleFilter extends Filter {
         }
         tex.transform.update();
         this.uniforms.uMask = tex;
-        this.uniforms.uMaskAnchor = [mask.x, mask.y];
-        this.uniforms.uMaskSize = [mask.width, mask.height];
-        this.uniforms.uMaskRotation = mask.rotation;
         this.uniforms.useMask = true;
-        this.uniforms.useBinaryMask = !!mask.binaryMask;
-        this.uniforms.useReverseMask = !!mask.reverseMask;
         this.uniforms.maskClamp = tex.transform.uClampFrame;
       } else {
         this.uniforms.useMask = false;
