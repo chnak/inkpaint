@@ -416,7 +416,13 @@ export default class DisplayObject extends EventEmitter {
     return filter;
   }
 
+  get colorMatrix() {
+    return { matrix: this._colorMatrix, alpha: this._colorMatrixAlpha };
+  }
+
   setColorMatrix(opts, alpha=1) {
+    this._colorMatrix = opts;
+    this._colorMatrixAlpha = alpha;
     let filter = this.filters.find(x => x instanceof ColorMatrixFilter);
     if (!Array.isArray(opts) || !opts.length) {
       // remove filter
@@ -450,7 +456,7 @@ export default class DisplayObject extends EventEmitter {
       if (isNaN(rgbColor[0]) || isNaN(rgbColor[1]) || isNaN(rgbColor[2])) {
         this._chroma = null;
       } else {
-        this._chroma = { rgbColor, similarity, smoothness, saturation, shadowness };
+        this._chroma = { color, rgbColor, similarity, smoothness, saturation, shadowness };
       }
     } else {
       this._chroma = null;
