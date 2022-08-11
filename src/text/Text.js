@@ -9,6 +9,7 @@ import TextMetrics from "./TextMetrics";
 import trimCanvas from "../utils/trimCanvas";
 import Doc from "../polyfill/Doc";
 import { addToTextureCache } from "../utils/cache";
+import _ from "lodash";
 
 const defaultDestroyOptions = {
   texture: true,
@@ -72,6 +73,8 @@ export default class Text extends Sprite {
     const lineWidths = measured.lineWidths;
     const maxLineWidth = measured.maxLineWidth;
     const fontProperties = measured.fontProperties;
+    this.lineHeight = measured.lineHeight;
+    this.charWidth = fontProperties.fontSize + this._style.letterSpacing;;
 
     this.canvas.width = Math.ceil(
       (Math.max(1, width) + style.padding * 2) * this.resolution
@@ -83,6 +86,7 @@ export default class Text extends Sprite {
     context.scale(this.resolution, this.resolution);
     context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.drawBackground(style);
+    this.drawSelection();
 
     context.font = this._font;
     context.strokeStyle = style.stroke;
@@ -147,6 +151,7 @@ export default class Text extends Sprite {
     context.globalAlpha = 1;
     context.fillStyle = this._generateFillStyle(style, lines);
 
+    const chars = [];
     // draw lines line by line
     for (let i = 0; i < lines.length; i++) {
       linePositionX = style.strokeThickness / 2;
@@ -169,13 +174,19 @@ export default class Text extends Sprite {
       }
 
       if (style.fill) {
-        this.drawLetterSpacing(
+        const lastLine = chars[chars.length - 1];
+        const lastCharIdx = lastLine ? lastLine[lastLine.length - 1].ci : -1;
+        chars.push(this.drawLetterSpacing(
           lines[i],
           linePositionX + style.padding,
-          linePositionY + style.padding
-        );
+          linePositionY + style.padding,
+          false, 
+          lastCharIdx + 1
+        ));
       }
     }
+    this.chars = chars;
+    // console.log('chars', chars);
 
     this.updateTexture();
   }
@@ -194,40 +205,69 @@ export default class Text extends Sprite {
     }
   }
 
-  drawLetterSpacing(text, x, y, isStroke = false) {
+  drawSelection() {
+    if (!this.selectionStart || !this.selectionEnd) {
+      this.selection = null;
+      return;
+    }
+    const height = this.lineHeight;
+    // make sure start < end;
+    const [ start, end ] = (this.selectionStart.lineIdx < this.selectionEnd.lineIdx
+       || (this.selectionStart.lineIdx == this.selectionEnd.lineIdx && this.selectionStart.charIdx <= this.selectionEnd.charIdx))
+        ? [this.selectionStart, this.selectionEnd] : [this.selectionEnd, this.selectionStart];
+
+    this.selection = {start, end};
+    for (let li = start.lineIdx; li <= end.lineIdx; li++) {
+      const charStart = li === start.lineIdx ? start.x : 
+        (this.chars[li][0]?.left || 0); // todo: align center / right
+      const charEnd = li === end.lineIdx ? end.x : 
+        (this.chars[li][this.chars[li].length - 1]?.right || 0);
+      this.context.fillStyle = this._style.selectionBgColor;
+      this.context.fillRect(charStart, li * height, charEnd - charStart, height);
+    }
+  }
+
+  drawLetterSpacing(text, x, y, isStroke=false, ci=0) {
     const style = this._style;
 
     // letterSpacing of 0 means normal
     const letterSpacing = style.letterSpacing;
 
-    if (letterSpacing === 0) {
-      if (isStroke) {
-        this.context.strokeText(text, x, y);
-      } else {
-        this.context.fillText(text, x, y);
-      }
-      return;
-    }
+    // 需要计算单个字符的selection，暂时不用快捷的渲染，统一
+    // if (letterSpacing === 0) {
+    //   if (isStroke) {
+    //     this.context.strokeText(text, x, y);
+    //   } else {
+    //     this.context.fillText(text, x, y);
+    //   }
+    //   return;
+    // }
 
-    const characters = String.prototype.split.call(text, "");
+    const characters = Array.from(text);
     let currentPosition = x;
     let index = 0;
     let current = "";
     let previousWidth = this.context.measureText(text).width;
     let currentWidth = 0;
 
-    while (index < text.length) {
+    const chars = [];
+    while (index < characters.length) {
       current = characters[index++];
+      x = currentPosition;
       if (isStroke) {
-        this.context.strokeText(current, currentPosition, y);
+        this.context.strokeText(current, x, y);
       } else {
-        this.context.fillText(current, currentPosition, y);
+        this.context.fillText(current, x, y);
       }
 
-      currentWidth = this.context.measureText(text.substring(index)).width;
+      currentWidth = this.context.measureText(characters.slice(index).join('')).width;
       currentPosition += previousWidth - currentWidth + letterSpacing;
       previousWidth = currentWidth;
+      const right = currentPosition - (letterSpacing * 0.5);
+      chars.push({ char: current, ci, top: y, left: x, right, cx: 0.5 * (x + right) });
+      ci++;
     }
+    return chars;
   }
 
   updateStyle(style) {
@@ -237,6 +277,165 @@ export default class Text extends Sprite {
 
       this.style[newKey] = style[key];
     }
+  }
+
+  selectStart(point) {
+    this.selectionStart = this.indexOf(point);
+    this.selectionEnd = null;
+  }
+
+  selectEnd(point) {
+    this.selectionEnd = this.indexOf(point);
+    this.cursorPoint = { x: this.selectionEnd.x, y: this.selectionEnd.y + 1};
+    this.updateText(false);
+  }
+
+  selectMove(x, y, withShift, withCtrl) {
+    if (!this.selectionEnd) return; // todo: select 0 as default
+    if (x !== 0) {
+      let point;
+      if (!withShift && this.selection && this.selection.start.ci < this.selection.end.ci) {
+        // 有选中的时候，纯移动先移到开头/末尾
+        const sel = this.selection[x > 0 ? 'end' : 'start'];
+        point = { x: sel.x, y: sel.y + 1 };
+      } else if (!withCtrl && x < 0 && this.selectionEnd.charIdx <= 0) {
+        // prev line
+        if (this.selectionEnd.lineIdx > 0) {
+          const prevLine = this.chars[this.selectionEnd.lineIdx - 1];
+          const lastChar = prevLine[prevLine.length - 1];
+          // 上一行的lastChar可能是\n，也可能是强制换行的字符，都需要到【左边】
+          point = { x: lastChar.left, y: lastChar.top + 1 };
+          // console.log('selectMove', lastChar, point);
+        }
+      } else if (!withCtrl && x > 0 && this.selectionEnd.charIdx >= this.textLine(this.selectionEnd.lineIdx).length) {
+        // next line
+        if (this.selectionEnd.lineIdx + 1 < this.chars.length) {
+          const line = this.chars[this.selectionEnd.lineIdx];
+          // 判断是否有强制换行
+          const key = (line[line.length - 1].char !== '\n') ? 'right' : 'left';
+          const nextLine = this.chars[this.selectionEnd.lineIdx + 1];
+          const firstChar = nextLine[0];
+          point = { x: firstChar[key], y: firstChar.top + 1 };
+        }
+      } else {
+        let charIdx = this.selectionEnd.charIdx + (x > 0 ? 1 : -1);
+        const line = this.textLine(this.selectionEnd.lineIdx);
+        // 跳到开头、末尾
+        if (withCtrl) charIdx = x > 0 ? line.length : 0;
+        // 最后一个字符
+        const key = charIdx >= line.length ? 'right' : 'left';
+        const char = line[Math.min(charIdx, line.length - 1)];
+        point = { x: char[key], y: char.top + 1 };
+      }
+
+      if (point) {
+        this.cursorPoint = point;
+        this.selectionEnd = this.indexOf(point);
+      }
+    } else {
+      let i = this.selectionEnd.lineIdx + (y > 0 ? 1 : -1);
+      let pX = this.cursorPoint.x;
+      if (withCtrl) { // leftTop / rightBottom
+        i = y > 0 ? this.chars.length : 0; 
+        pX = y > 0 ? this.width : 0;
+      }
+      this.selectionEnd = this.indexOf({ x: pX, y: this.lineHeight * i + 1 });
+    }
+
+    // cursor move, without shift
+    if (!withShift) this.selectionStart = this.selectionEnd;
+
+    this.updateText(false);
+  }
+
+  textLine(lineIdx) {
+    return this.chars[lineIdx].filter(x => x.char != '\n');
+  }
+
+  indexOf(point) {
+    const lineIdx = Math.max(0, Math.min(this.chars.length - 1, Math.floor(point.y / this.lineHeight)));
+    let charIdx = 0;
+    let ci = this.chars[lineIdx][0] ? this.chars[lineIdx][0].ci : 0;
+    let x = this.chars[lineIdx][0] ? this.chars[lineIdx][0].left : 0;
+    for (const char of this.chars[lineIdx]) {
+      if (char.char === '\n') continue;
+      if (point.x < char.cx) break;
+      charIdx++;
+      x = char.right;
+      ci = char.ci + 1;
+    }
+    const height = this.lineHeight;
+    return { lineIdx, charIdx, ci, x, y: lineIdx * height, height };
+  }
+
+  cursor(ci) {
+    let index = ci;
+    if (ci === undefined) index = this.selectionEnd.ci;
+    let char = this.charOf(index);
+    let key = 'left';
+    if (!char) {
+      const lastLine = this.chars[this.chars.length - 1];
+      char = lastLine[lastLine.length - 1];
+      key = 'right';
+    }
+
+    // update
+    this.selectionEnd = this.indexOf({ x: char[key], y: char.top + 1 });
+    if (ci === undefined) return this.selectionEnd; // get
+    this.selectionStart = this.selectionEnd; // set
+  }
+
+  input(val) {
+    const { text, cursorIndex: ci } = this.delete(false); // remove selection
+    const strs = Array.from(text);
+    strs.splice(cursorIndex, 0, val);
+    return { text: strs.join(''), cursorIndex: ci + Array.from(val).length };
+  }
+
+  delete(force=true) {
+    const strs = Array.from(this.text);
+    let start = this.selection.start.ci - 1;
+    let count = 1;
+    let cursor = this.selectionEnd;
+    if (this.selection && this.selection.start.ci < this.selection.end.ci) {
+      start = this.selection.start.ci;
+      count = this.selection.end.ci - this.selection.start.ci;
+      cursor = this.selection.end; // 确保是后边那个
+      this.selectionStart = this.selectionEnd = cursor; // 去掉选中
+    } else if (!force || !cursor || cursor.ci < 1) {
+      return { text: this.text, cursorIndex: cursor ? cursor.ci : strs.length + 1 };
+    }
+    // 从数组中删除
+    strs.splice(start, count);
+
+    // 找到当前光标右边的char
+    let line = this.chars[cursor.lineIdx];
+    let key = cursor.charIdx < line.length ? 'left' : 'right';
+    let char = line[Math.min(cursor.charIdx, line.length - 1)];
+    if (key === 'right' && this.chars[cursor.lineIdx + 1]
+       && this.chars[cursor.lineIdx + 1][0]) {
+      char = this.chars[cursor.lineIdx + 1][0];
+      key = 'left';
+    }
+
+    const cursorIndex = char.ci + (key === 'right' ? 1 : 0) - count;
+    return { text: strs.join(''), cursorIndex };
+  }
+
+  charOf(ci) {
+    for (const line of this.chars) {
+      for (const char of line) {
+        if (char.ci === ci) return char;
+      }
+    }
+  }
+
+  selectionText() {
+    if (this.selection && this.selection.start.ci < this.selection.end.ci) {
+      const strs = Array.from(this.text);
+      return strs.slice(this.selection.start.ci, this.selection.end.ci).join('');
+    }
+    return '';
   }
 
   camelCase(name) {

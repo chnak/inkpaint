@@ -32,17 +32,45 @@ export default class TextMetrics {
 
     context.font = font;
 
-    const outputText = wordWrap
-      ? TextMetrics.wordWrap(text, style, canvas)
-      : text;
-    const lines = outputText.split(/(?:\r\n|\r|\n)/);
+    // const outputText = wordWrap
+    //   ? TextMetrics.wordWrap(text, style, canvas)
+    //   : text;
+    // console.log({text, wordWrap, outputText});
+    // const lines = outputText.split(/(?:\r\n|\r|\n)/);
+
+    let lines;
+    if (wordWrap) {
+      lines = TextMetrics.wordWrap(text, style, canvas);
+    } else {
+      lines = text.split(/(?:\r\n|\r|\n)/).map(line => `${line}\n`);
+    }
+
+    let after = 0;
+    // 最后会多一个\n，不去掉，但校验的时候不算
+    const lastLine = lines[lines.length - 1];
+    if (lastLine.endsWith('\n')) {
+      after = -1;
+      //lines[lines.length - 1] = lastLine.substring(0, lastLine.length - 1);
+    }
+
+    const before = Array.from(text).length;
+    lines.map((l) => after += Array.from(l).length);
+    if (before !== after) {
+      console.error('text parse err!!!', {before, after}, lines);
+    } else {
+      // console.log('text parse ok', {before, after}, lines);
+    }
+
     const lineWidths = new Array(lines.length);
     let maxLineWidth = 0;
 
     for (let i = 0; i < lines.length; i++) {
+      const mText = lines[i];
+      // 计算宽度的时候不考虑\n, 避免影响视觉居中
+      if (mText.endsWith('\n')) mText = mText.substring(0, mText.length - 1);
       const lineWidth =
-        context.measureText(lines[i]).width +
-        (lines[i].length - 1) * style.letterSpacing;
+        context.measureText(mText).width +
+        (Array.from(mText).length - 1) * style.letterSpacing;
 
       lineWidths[i] = lineWidth;
       maxLineWidth = Math.max(maxLineWidth, lineWidth);
@@ -81,7 +109,7 @@ export default class TextMetrics {
 
     let width = 0;
     let line = "";
-    let lines = "";
+    let lines = [];
 
     const cache = {};
     const { letterSpacing, whiteSpace } = style;
@@ -103,6 +131,8 @@ export default class TextMetrics {
 
     // break text into words, spaces and newline chars
     const tokens = TextMetrics.tokenize(text);
+    // tokens是完整text, 一个字符都不少的
+    // console.log('tokens', tokens);
 
     for (let i = 0; i < tokens.length; i++) {
       // get the word, space or newlineChar
@@ -112,7 +142,7 @@ export default class TextMetrics {
       if (TextMetrics.isNewline(token)) {
         // keep the new line
         if (!collapseNewlines) {
-          lines += TextMetrics.addLine(line);
+          lines.push(TextMetrics.addLine(line, 'T0'));
           canPrependSpaces = !collapseSpaces;
           line = "";
           width = 0;
@@ -150,7 +180,7 @@ export default class TextMetrics {
         // if we are not already at the beginning of a line
         if (line !== "") {
           // start newlines for overflow words
-          lines += TextMetrics.addLine(line);
+          lines.push(TextMetrics.addLine(line, 'T1', false));
           line = "";
           width = 0;
         }
@@ -158,7 +188,8 @@ export default class TextMetrics {
         // break large word over multiple lines
         if (TextMetrics.canBreakWords(token, style.breakWords)) {
           // break word into characters
-          const characters = token.split("");
+          const characters = Array.from(token);
+          // console.log('characters', characters);
 
           // loop the characters
           for (let j = 0; j < characters.length; j++) {
@@ -167,6 +198,7 @@ export default class TextMetrics {
             let k = 1;
             // we are not at the end of the token
 
+            // always break, not effect
             while (characters[j + k]) {
               const nextChar = characters[j + k];
               const lastChar = char[char.length - 1];
@@ -188,9 +220,8 @@ export default class TextMetrics {
               }
 
               k++;
+              j++;
             }
-
-            j += char.length - 1;
 
             const characterWidth = TextMetrics.getFromCache(
               char,
@@ -200,13 +231,14 @@ export default class TextMetrics {
             );
 
             if (characterWidth + width > wordWrapWidth) {
-              lines += TextMetrics.addLine(line);
+              lines.push(TextMetrics.addLine(line, 'T2', false)); // 行内强制换行，不加\n
               canPrependSpaces = false;
               line = "";
               width = 0;
             }
 
             line += char;
+            // console.log('line += char', {line, char});
             width += characterWidth;
           }
         }
@@ -216,7 +248,7 @@ export default class TextMetrics {
           // if there are words in this line already
           // finish that line and start a new one
           if (line.length > 0) {
-            lines += TextMetrics.addLine(line);
+            lines.push(TextMetrics.addLine(line, 'T3', false));
             line = "";
             width = 0;
           }
@@ -224,7 +256,7 @@ export default class TextMetrics {
           const isLastToken = i === tokens.length - 1;
 
           // give it its own line if it's not the end
-          lines += TextMetrics.addLine(token, !isLastToken);
+          lines.push(TextMetrics.addLine(token, 'T4', isLastToken));
           canPrependSpaces = false;
           line = "";
           width = 0;
@@ -239,8 +271,14 @@ export default class TextMetrics {
           // if its a space we don't want it
           canPrependSpaces = false;
 
+          // 一行末尾的空格，这里不加的话，下一行的开头也会丢弃
+          while (TextMetrics.isBreakingSpace(token)) {
+            line += token;
+            token = tokens[++i];
+          }
+
           // add a new line
-          lines += TextMetrics.addLine(line);
+          lines.push(TextMetrics.addLine(line, 'T5', false)); // 行内强制换行，不加\n
 
           // start a new line
           line = "";
@@ -255,6 +293,7 @@ export default class TextMetrics {
         ) {
           // add the word to the current line
           line += token;
+          // console.log('line += token', {line, token});
 
           // update width counter
           width += tokenWidth;
@@ -262,13 +301,20 @@ export default class TextMetrics {
       }
     }
 
-    lines += TextMetrics.addLine(line, false);
+    lines.push(TextMetrics.addLine(line, 'T6'));
 
-    return lines;
+    // 把单个\n跟上一行结尾无\n的合并
+    for (let i = 0; i < lines.length - 1; i++) {
+      if (lines[i].endsWith('\n') || lines[i+1] !== '\n') continue;
+      lines[i] += lines[i+1];
+      lines[i+1] = '';
+    }
+
+    return lines.filter(x => x.length > 0);
   }
 
-  static addLine(line, newLine = true) {
-    line = TextMetrics.trimRight(line);
+  static addLine(line, tag, newLine=true) {
+    // console.log('addLine', tag, {line, newLine});
     line = newLine ? `${line}\n` : line;
     return line;
   }
