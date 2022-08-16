@@ -371,7 +371,7 @@ export default class Text extends Sprite {
   cursor(ci) {
     let index = ci;
     if (ci === undefined) index = this.selectionEnd.ci;
-    console.log('cursor', {index, ci}, Array.from(this.text).length);
+    // console.log('cursor', {index, ci}, Array.from(this.text).length);
     let char = this.charOf(index);
     let key = 'left';
     if (!char) {
