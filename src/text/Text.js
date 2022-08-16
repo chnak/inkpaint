@@ -371,6 +371,7 @@ export default class Text extends Sprite {
   cursor(ci) {
     let index = ci;
     if (ci === undefined) index = this.selectionEnd.ci;
+    console.log('cursor', {index, ci}, Array.from(this.text).length);
     let char = this.charOf(index);
     let key = 'left';
     if (!char) {
@@ -388,7 +389,7 @@ export default class Text extends Sprite {
   input(val) {
     const { text, cursorIndex: ci } = this.delete(false); // remove selection
     const strs = Array.from(text);
-    strs.splice(cursorIndex, 0, val);
+    strs.splice(ci, 0, val);
     return { text: strs.join(''), cursorIndex: ci + Array.from(val).length };
   }
 
