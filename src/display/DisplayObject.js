@@ -10,6 +10,7 @@ import FXAAFilter from "../filters/fxaa/FXAAFilter";
 import BlurFilter from "../filters/blur/BlurFilter";
 import ChromaFilter from "../filters/chroma/ChromaFilter";
 import DisplacementFilter from "../filters/displacement/DisplacementFilter";
+import TransitionFilter from "../filters/transition/TransitionFilter";
 import ColorMatrixFilter from "../filters/colormatrix/ColorMatrixFilter";
 import SimpleFilter from "../filters/simple/SimpleFilter";
 
@@ -413,6 +414,14 @@ export default class DisplayObject extends EventEmitter {
       filter = new DisplacementFilter(maskSprite, scale);
       this.filters.push(filter);
     }
+    return filter;
+  }
+
+  setTransition(transConf) {
+    // remove old
+    this.filters = this.filters.filter(x => !(x instanceof TransitionFilter));
+    const filter = new TransitionFilter(transConf);
+    this.filters.push(filter);
     return filter;
   }
 
