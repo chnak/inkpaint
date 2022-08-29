@@ -9,7 +9,26 @@ export default class TransitionFilter extends Filter {
   constructor(transition) {
     let vert = readFileSync(join(__dirname, "./trans.vert"), "utf8");
     let frag = readFileSync(join(__dirname, "./trans.frag"), "utf8");
-    frag = frag.replace('${transitionGlsl}', transition.glsl);
+
+    // todo: extractUniformsFromString写的比较烂，需要过滤掉注释
+    let glsl = transition.glsl;
+    const lines = [];
+    for (let line of glsl.split("\n")) {
+      line = line.trim();
+      if (line.startsWith('//')) continue;
+      if (line.startsWith('uniform ')) {
+        const words = [];
+        for (const word of line.replace(/\s+/g, ' ').split(" ")) {
+          if (word.startsWith('//')) break;
+          words.push(word);
+        }
+        lines.push(words.join(' '));
+      } else {
+        lines.push(line);
+      }
+    }
+    glsl = lines.join("\n");
+    frag = frag.replace('${transitionGlsl}', glsl);
     super(vert, frag);
 
     this.fromMatrix = new Matrix();
