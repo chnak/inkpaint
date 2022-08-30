@@ -36,13 +36,10 @@ export default class TransitionFilter extends Filter {
     this.transition = transition;
   }
 
-  apply(filterManager, input, output) {
-    for (const key of ['from', 'to']) {
-      const k = `${key}Matrix`;
-      this.uniforms[k] = filterManager.calculateSpriteMatrix(this[k], this[`${key}Sprite`]);
-    }
-    super.apply(filterManager, input, output);
-  }
+  // apply(filterManager, input, output) {
+  //   console.log('apply', this.uniforms);
+  //   super.apply(filterManager, input, output);
+  // }
 
   get prev() {
     return this.fromSprite;
@@ -66,6 +63,14 @@ export default class TransitionFilter extends Filter {
 
   set ratio(ratio) {
     this.uniforms.ratio = ratio;
+  }
+
+  get offset() {
+    return this.uniforms._offset;
+  }
+
+  set offset(offset) {
+    this.uniforms._offset = offset;
   }
 
   set params(params) {
@@ -100,15 +105,7 @@ export default class TransitionFilter extends Filter {
   setSprite(key, sprite) {
     this[`${key}Sprite`] = sprite;
     sprite.renderable = false;
-    let tex = sprite.texture;
-    if (!tex.transform) {
-      // margin = 0.0, let it bleed a bit, shader code becomes easier
-      // assuming that atlas textures were made with 1-pixel padding
-      tex.transform = new TextureMatrix(tex, 0.0);
-    }
-    tex.transform.update();
-    this.uniforms[`${key}Sampler`] = tex;
-    this.uniforms[`${key}ClampFrame`] = tex.transform.uClampFrame;
+    this.uniforms[`${key}Sampler`] = sprite.texture;
   }
 
   updateProgress(progress) {
