@@ -74,7 +74,7 @@ export default class Text extends Sprite {
     const maxLineWidth = measured.maxLineWidth;
     const fontProperties = measured.fontProperties;
     this.lineHeight = measured.lineHeight;
-    this.charWidth = fontProperties.fontSize + this._style.letterSpacing;;
+    this.charWidth = fontProperties.fontSize + this._style.letterSpacing;
 
     this.canvas.width = Math.ceil(
       (Math.max(1, width) + style.padding * 2) * this.resolution

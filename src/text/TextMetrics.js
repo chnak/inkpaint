@@ -41,6 +41,7 @@ export default class TextMetrics {
     let lines;
     if (wordWrap) {
       lines = TextMetrics.wordWrap(text, style, canvas);
+      // console.log('measureText', text, lines);
     } else {
       lines = text.split(/(?:\r\n|\r|\n)/).map(line => `${line}\n`);
     }
@@ -137,6 +138,7 @@ export default class TextMetrics {
     for (let i = 0; i < tokens.length; i++) {
       // get the word, space or newlineChar
       let token = tokens[i];
+      // console.log('-----token', {i, token});
 
       // if word is a new line
       if (TextMetrics.isNewline(token)) {
@@ -238,7 +240,7 @@ export default class TextMetrics {
             }
 
             line += char;
-            // console.log('line += char', {line, char});
+            // console.log('333 line += token', {line, token});
             width += characterWidth;
           }
         }
@@ -274,7 +276,12 @@ export default class TextMetrics {
           // 一行末尾的空格，这里不加的话，下一行的开头也会丢弃
           while (TextMetrics.isBreakingSpace(token)) {
             line += token;
+            // console.log('444 line += token', {line, token});
             token = tokens[++i];
+            if (token === undefined) {
+              token = '';
+              break;
+            }
           }
 
           // add a new line
@@ -293,7 +300,7 @@ export default class TextMetrics {
         ) {
           // add the word to the current line
           line += token;
-          // console.log('line += token', {line, token});
+          // console.log('555 line += token', {line, token});
 
           // update width counter
           width += tokenWidth;
@@ -301,6 +308,7 @@ export default class TextMetrics {
       }
     }
 
+    // console.log('line', line);
     lines.push(TextMetrics.addLine(line, 'T6'));
 
     // 把单个\n跟上一行结尾无\n的合并
