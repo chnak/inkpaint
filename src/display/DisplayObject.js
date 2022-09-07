@@ -255,6 +255,10 @@ export default class DisplayObject extends EventEmitter {
           this.rotation = val;
           break;
 
+        case "opacity":
+          this.alpha = val;
+          break;
+
         default:
           this[key] = val;
       }
