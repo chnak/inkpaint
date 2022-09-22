@@ -1,9 +1,6 @@
 import Filter from "../../renderers/webgl/filters/Filter";
-import Matrix from "../../math/Matrix";
-import Point from "../../math/Point";
 import { readFileSync } from "fs";
 import { join } from "path";
-import { default as TextureMatrix } from "../../textures/TextureMatrix";
 
 export default class TransitionFilter extends Filter {
   constructor(transition) {
@@ -31,8 +28,6 @@ export default class TransitionFilter extends Filter {
     frag = frag.replace('${transitionGlsl}', glsl);
     super(vert, frag);
 
-    this.fromMatrix = new Matrix();
-    this.toMatrix = new Matrix();
     this.transition = transition;
   }
 

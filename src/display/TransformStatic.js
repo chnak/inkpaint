@@ -8,6 +8,7 @@ export default class TransformStatic extends TransformBase {
     this.position = new ObservablePoint(this.onChange, this, 0, 0);
     this.scale = new ObservablePoint(this.onChange, this, 1, 1);
     this.pivot = new ObservablePoint(this.onChange, this, 0, 0);
+    this.flip = new ObservablePoint(this.onChange, this, 1, -1);
     this.skew = new ObservablePoint(this.updateSkew, this, 0, 0);
     this._rotation = 0;
 
@@ -38,10 +39,10 @@ export default class TransformStatic extends TransformBase {
 
     if (this._localID !== this._currentLocalID) {
       // get the matrix values of the displayobject based on its transform properties..
-      lt.a = this._cx * this.scale._x;
-      lt.b = this._sx * this.scale._x;
-      lt.c = this._cy * this.scale._y;
-      lt.d = this._sy * this.scale._y;
+      lt.a = this._cx * this.scale._x * this.flip._x;
+      lt.b = this._sx * this.scale._x * this.flip._x;
+      lt.c = this._cy * this.scale._y * this.flip._y;
+      lt.d = this._sy * this.scale._y * this.flip._y;
 
       lt.tx = this.position._x - (this.pivot._x * lt.a + this.pivot._y * lt.c);
       lt.ty = this.position._y - (this.pivot._x * lt.b + this.pivot._y * lt.d);
@@ -57,10 +58,10 @@ export default class TransformStatic extends TransformBase {
 
     if (this._localID !== this._currentLocalID) {
       // get the matrix values of the displayobject based on its transform properties..
-      lt.a = this._cx * this.scale._x;
-      lt.b = this._sx * this.scale._x;
-      lt.c = this._cy * this.scale._y;
-      lt.d = this._sy * this.scale._y;
+      lt.a = this._cx * this.scale._x * this.flip._x;
+      lt.b = this._sx * this.scale._x * this.flip._x;
+      lt.c = this._cy * this.scale._y * this.flip._y;
+      lt.d = this._sy * this.scale._y * this.flip._y;
 
       lt.tx = this.position._x - (this.pivot._x * lt.a + this.pivot._y * lt.c);
       lt.ty = this.position._y - (this.pivot._x * lt.b + this.pivot._y * lt.d);

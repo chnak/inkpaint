@@ -402,6 +402,11 @@ export default class DisplayObject extends EventEmitter {
     this.filters = this.filters.filter(x => x != filter);
   }
 
+  setFlip(x, y) {
+    this.transform.flip.x = x ? -1 : 1;
+    this.transform.flip.y = y ? -1 : 1;
+  }
+
   setMotion(maskSprite, scale) {
     let filter = this.filters.find(x => x instanceof DisplacementFilter);
     if (!maskSprite) {

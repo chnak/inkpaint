@@ -7,6 +7,7 @@ export default class Transform extends TransformBase {
 
     this.position = new Point(0, 0);
     this.scale = new Point(1, 1);
+    this.flip = new Point(1, -1);
     this.skew = new ObservablePoint(this.updateSkew, this, 0, 0);
     this.pivot = new Point(0, 0);
     this._rotation = 0;
@@ -27,10 +28,10 @@ export default class Transform extends TransformBase {
   updateLocalTransform() {
     const lt = this.localTransform;
 
-    lt.a = this._cx * this.scale.x;
-    lt.b = this._sx * this.scale.x;
-    lt.c = this._cy * this.scale.y;
-    lt.d = this._sy * this.scale.y;
+    lt.a = this._cx * this.scale.x * this.flip.x;
+    lt.b = this._sx * this.scale.x * this.flip.x;
+    lt.c = this._cy * this.scale.y * this.flip.y;
+    lt.d = this._sy * this.scale.y * this.flip.y;
 
     lt.tx = this.position.x - (this.pivot.x * lt.a + this.pivot.y * lt.c);
     lt.ty = this.position.y - (this.pivot.x * lt.b + this.pivot.y * lt.d);
@@ -39,10 +40,10 @@ export default class Transform extends TransformBase {
   updateTransform(parentTransform) {
     const lt = this.localTransform;
 
-    lt.a = this._cx * this.scale.x;
-    lt.b = this._sx * this.scale.x;
-    lt.c = this._cy * this.scale.y;
-    lt.d = this._sy * this.scale.y;
+    lt.a = this._cx * this.scale.x * this.flip.x;
+    lt.b = this._sx * this.scale.x * this.flip.x;
+    lt.c = this._cy * this.scale.y * this.flip.y;
+    lt.d = this._sy * this.scale.y * this.flip.y;
 
     lt.tx = this.position.x - (this.pivot.x * lt.a + this.pivot.y * lt.c);
     lt.ty = this.position.y - (this.pivot.x * lt.b + this.pivot.y * lt.d);
