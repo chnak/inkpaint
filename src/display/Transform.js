@@ -7,7 +7,7 @@ export default class Transform extends TransformBase {
 
     this.position = new Point(0, 0);
     this.scale = new Point(1, 1);
-    this.flip = new Point(1, -1);
+    this.flip = new Point(1, 1);
     this.skew = new ObservablePoint(this.updateSkew, this, 0, 0);
     this.pivot = new Point(0, 0);
     this._rotation = 0;

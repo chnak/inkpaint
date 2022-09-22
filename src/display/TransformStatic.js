@@ -8,7 +8,7 @@ export default class TransformStatic extends TransformBase {
     this.position = new ObservablePoint(this.onChange, this, 0, 0);
     this.scale = new ObservablePoint(this.onChange, this, 1, 1);
     this.pivot = new ObservablePoint(this.onChange, this, 0, 0);
-    this.flip = new ObservablePoint(this.onChange, this, 1, -1);
+    this.flip = new ObservablePoint(this.onChange, this, 1, 1);
     this.skew = new ObservablePoint(this.updateSkew, this, 0, 0);
     this._rotation = 0;
 
